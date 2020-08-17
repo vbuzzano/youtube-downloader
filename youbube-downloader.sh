@@ -99,6 +99,21 @@ while IFS= read -r channel; do
   local c_maxfilesize=${channel_args[3]}
   local c_subtitlelang=${channel_args[4]}
   local c_subtitleformat=${channel_args[5]}
+
+  # check that c_url is not empty
+  if [ "$c_url" == "" ]; then 
+    echo "ERROR: channel url is required for channel $channel"
+    exit 1
+  fi
+
+  # check channel infos value and set default values if needed
+  if [ "$c_dateafter" == "default" ] || [ "$c_dateafter" == "" ]; then c_dateafter=$DEFAULT_DATEAFTER; fi
+  if [ "$c_format" == "default" ] || [ "$c_format" == "" ]; then c_format=$DEFAULT_FORMAT; fi
+  if [ "$c_maxfilesize" == "default" ] || [ "$c_maxfilesize" == "" ]; then c_maxfilesize=$DEFAULT_MAXFILESIZE; fi
+  if [ "$c_subtitlelang" == "default" ] || [ "$c_subtitlelang" == "" ]; then c_subtitlelang=$DEFAULT_SUBTITLELANG; fi
+  if [ "$c_subtitleformat" == "default" ] || [ "$c_subtitleformat" == "" ]; then c_subtitleformat=$DEFAULT_SUBTITLEFORMAT; fi
+
+  # create unique channel key
   local c_key=$(echo -n "$c_url" | md5sum | cut -d' ' -f1)
 
   # check if we need to add old videos to downloaded archive
