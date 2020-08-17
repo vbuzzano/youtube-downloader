@@ -1,43 +1,51 @@
 #!/bin/bash
 
 DOWNLOAD_SPEED_LIMIT=20M
-DEST_DIR=/media/rdc-nas/video/Youtube
-DOWNLOAD_ARCHIVE=$DEST_DIR/downloaded.txt
-BATCH_FILE=$DEST_DIR/channel_list.txt
-COOKIES_FILE=$DEST_DIR/google_cookies.txt
-LOG_FILE=$DEST_DIR/downloaded.log
-CACHE_DIR=$DEST_DIR/cache
+DEST_DIR="~/Youtube"
+DOWNLOAD_ARCHIVE="$DEST_DIR/downloaded.txt"
+BATCH_FILE="$DEST_DIR/channel_list.txt"
+COOKIES_FILE="$DEST_DIR/google_cookies.txt"
+LOG_FILE="$DEST_DIR/downloaded.log"
+CACHE_DIR="$DEST_DIR/cache"
 
 DEFAULT_DATEAFTER=$(date +"%Y0101")
 DEFAULT_SUBTITLELANG=""
 DEFAULT_SUBTITLEFORMAT="srt"
 DEFAULT_FORMAT="bestvideo[ext=?mp4][height<=?720]+bestaudio[ext=?mp3]/best"
 DEFAULT_MAXFILESIZE="2048m"
+DEFAULT_SLEEP_INTERVAL=30
+DEFAULT_MAXSLEEP_INTERVAL=60
 
-TMP_DIR=/tmp/youtube-downloader
+TMP_DIR="/tmp/youtube-downloader"
 CURRENT_DIR=`pwd`
 
-# create log
-touch $LOG_FILE
 
-# assure download archive exists
-touch $DOWNLOAD_ARCHIVE
-
-# init cache dir
-mkdir -p $CACHE_DIR
+_usage()
+{
+  echo "Usage: $0 config_file"
+  exit 2
+}
 
 _printerr() {
-  if [ ! -z "$LOG_FILE" ]; then 
+  if [ ! -z "$LOG_FILE" ]; then
     echo "ERROR: $@"  >> $LOG_FILE
   fi
   echo "$@" 1>&2
 }
 
 _print() {
-  if [ ! -z "$sub_lang" ]; then 
+  if [ ! -z "$sub_lang" ]; then
     echo "$@" >> $LOG_FILE
   fi
   echo "$@"
+}
+
+_load_config() {
+  exec 3<$CONFIG_FILE 
+  while read -u3 line; do
+    eval "$line"
+  done
+  exec 3<&-
 }
 
 _append_past_videos_to_downloaded_archive() {
@@ -48,18 +56,27 @@ _append_past_videos_to_downloaded_archive() {
   local date_after=$2
   local file_cache=$3
 
-  youtube-dl --playlist-reverse \
-    --ignore-errors \
-    --simulate \
-    --datebefore "$date_after" \
-    --no-cache-dir \
-    --cookies "$COOKIES_FILE" \
-    --youtube-skip-dash-manifest \
-    --get-id \
-    $url | tee -a $file_cache
+  local youtube_dl_cmd=""
+  read -d '' youtube_dl_cmd << EOF
+  youtube-dl --playlist-reverse
+    --ignore-errors
+    --simulate
+    --sleep-interval $DEFAULT_SLEEP_INTERVAL
+    --max-sleep-interval $DEFAULT_MAXSLEEP_INTERVAL
+    --datebefore "$date_after"
+    --no-cache-dir
+    --cookies "$COOKIES_FILE"
+    --youtube-skip-dash-manifest
+    --get-id
+    $url
+EOF
 
-    sed -i -E "s/(.*)/youtube \1/" $file_cache
-    cat $file_cache >> $DOWNLOAD_ARCHIVE && sed -i '/^$/d' $DOWNLOAD_ARCHIVE
+  # execute youtube-dl
+  rm -f $file_cache
+  eval $youtube_dl_cmd | tee -a $file_cache $LOG_FILE
+
+  sed -i -E "s/(.*)/youtube \1/" $file_cache && \
+  cat $file_cache >> $DOWNLOAD_ARCHIVE && sed -i '/^$/d' $DOWNLOAD_ARCHIVE
 }
 
 _download_videos() {
@@ -91,6 +108,8 @@ _download_videos() {
     --ignore-errors
     --max-filesize "$max_filesize"
     --limit-rate "$DOWNLOAD_SPEED_LIMIT"
+    --sleep-interval $DEFAULT_SLEEP_INTERVAL
+    --max-sleep-interval $DEFAULT_MAXSLEEP_INTERVAL
     --format "$format"
     --dateafter "$date_after"
     --youtube-skip-dash-manifest
@@ -102,14 +121,14 @@ _download_videos() {
     --write-description
 EOF
 
-  if [ ! -z "$sub_lang" ]; then 
+  if [ ! -z "$sub_lang" ]; then
     youtube_dl_cmd="$youtube_dl_cmd --write-sub --write-auto-sub --sub-lang \"$sub_lang\" --sub-format \"$sub_format\" --convert-subs \"$sub_format\""
   fi
 
   read -d '' youtube_dl_cmd << EOF
   $youtube_dl_cmd
     -o "%(uploader)s/%(uploader)s - S$(date +"%Y")/%(playlist_index)s. %(title)s %(upload_date)s/%(uploader)s - S$(date +"%Y")E%(playlist_index)s - %(upload_date)s - %(title)s --end.%(ext)s" \
-    $url 
+    $url
 EOF
 
   # execute youtube-dl
@@ -146,7 +165,7 @@ _execute() {
     local c_subtitleformat=${channel_args[5]}
 
     # check that c_url is not empty
-    if [ "$c_url" == "" ]; then 
+    if [ "$c_url" == "" ]; then
       echo "ERROR: channel url is required for channel $channel"
       exit 1
     fi
@@ -173,10 +192,31 @@ _execute() {
     _print "Download new videos files for $c_url"
 
     _download_videos "$c_url" "$c_key" "$c_dateafter" "$c_format" "$c_maxfilesize" "$c_subtitlelang" "$c_subtitleformat"
-    
+
     _print
     _print "done."
   done
 }
+
+# check config file
+CONFIG_FILE="$1"
+if [ -z "$CONFIG_FILE" ]; then _usage; fi
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "config file $CONFIG_FILE not found!"
+  exit 1
+fi
+
+# load config
+_load_config
+
+# create log
+touch $LOG_FILE
+
+# assure download archive exists
+touch $DOWNLOAD_ARCHIVE
+
+# init cache dir
+mkdir -p $CACHE_DIR
+
 
 _execute
