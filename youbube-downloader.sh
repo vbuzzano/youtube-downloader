@@ -86,24 +86,33 @@ _download_videos() {
 
 # Loop batch file
 awk '!/^(#|;|\])/'  $BATCH_FILE |
-while IFS= read -r URL; do
+while IFS= read -r channel; do
 
   _print ""
-  _print "Prepare to download videos for $URL ..."
+  _print "Prepare to download videos for $channel ..."
+
+  # read channel infos
+  IFS='|' read -ra channel_args <<< "$channel"
+  local c_url=${channel_args[0]}
+  local c_dateafter=${channel_args[1]}
+  local c_format=${channel_args[2]}
+  local c_maxfilesize=${channel_args[3]}
+  local c_subtitlelang=${channel_args[4]}
+  local c_subtitleformat=${channel_args[5]}
+  local c_key=$(echo -n "$c_url" | md5sum | cut -d' ' -f1)
 
   # check if we need to add old videos to downloaded archive
-  local KEY=$(echo -n "$URL" | md5sum | cut -d' ' -f1)
-  local filename="$CACHE_DIR/$KEY.txt"
-  if [ ! -f "$filename" ]; then
+  local past_downloaded_filename="$CACHE_DIR/$KEY.txt"
+  if [ ! -f "$past_downloaded_filename" ]; then
       _print
-      _print "Add past videos id to download archive for $URL to file $filename ..."
-      _append_past_videos_to_downloaded_archive $URL $filename
+      _print "Add past videos id to download archive for $c_url to file $past_downloaded_filename ..."
+      _append_past_videos_to_downloaded_archive $c_url $past_downloaded_filename
   fi
 
   _print
-  _print "nDownload new videos files for $URL"
+  _print "Download new videos files for $c_url"
   
-  _download_videos $URL
+  _download_videos $c_url
   
   _print
   _print "done."
