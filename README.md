@@ -2,9 +2,9 @@
 
 ## Dependencies
 
-- youtube-dl  \
-- ffmpeg   \
-- rename  \
+- youtube-dl  
+- ffmpeg   
+- rename  
 
 
 ### Install youtube-cl
@@ -25,7 +25,6 @@ http://ytdl-org.github.io/youtube-dl/download.html
 
 # config file
 
-<code>
 DOWNLOAD_SPEED_LIMIT="10M"  
 DEST_DIR="/tmp/Youtube"  
 DOWNLOAD_ARCHIVE="$DEST_DIR/downloaded.txt"  
@@ -41,7 +40,7 @@ DEFAULT_FORMAT="bestvideo[ext=?mp4][height<=?720]+bestaudio[ext=?mp3]/best"
 DEFAULT_MAXFILESIZE="2048m"  
 DEFAULT_SLEEP_INTERVAL=30  
 DEFAULT_MAXSLEEP_INTERVAL=60  
-</code>
+
 
 
 ### Usage
