@@ -4,7 +4,7 @@ DOWNLOAD_SPEED_LIMIT=20M
 DEST_DIR="~/Youtube"
 DOWNLOAD_ARCHIVE="$DEST_DIR/downloaded.txt"
 BATCH_FILE="$DEST_DIR/channel_list.txt"
-COOKIES_FILE="$DEST_DIR/google_cookies.txt"
+COOKIES_FILE="" # set a file to enable cookies
 LOG_FILE="$DEST_DIR/downloaded.log"
 CACHE_DIR="$DEST_DIR/cache"
 
@@ -64,12 +64,15 @@ _append_past_videos_to_downloaded_archive() {
     --sleep-interval $DEFAULT_SLEEP_INTERVAL
     --max-sleep-interval $DEFAULT_MAXSLEEP_INTERVAL
     --datebefore "$date_after"
-    --no-cache-dir
-    --cookies "$COOKIES_FILE"
     --youtube-skip-dash-manifest
+    --no-cache-dir
     --get-id
-    $url
 EOF
+
+  if [ ! -z "$COOKIES_FILE" ]; then
+    youtube_dl_cmd="$youtube_dl_cmd --cookies \"$COOKIES_FILE\""
+  fi
+  youtube_dl_cmd="$youtube_dl_cmd $url"
 
   # execute youtube-dl
   rm -f $file_cache
@@ -115,11 +118,14 @@ _download_videos() {
     --youtube-skip-dash-manifest
     --autonumber-start 0001
     --no-cache-dir
-    --cookies "$COOKIES_FILE"
     --add-metadata
     --write-thumbnail
     --write-description
 EOF
+
+  if [ ! -z "$COOKIES_FILE" ]; then
+    youtube_dl_cmd="$youtube_dl_cmd --cookies \"$COOKIES_FILE\""
+  fi
 
   if [ ! -z "$sub_lang" ]; then
     youtube_dl_cmd="$youtube_dl_cmd --write-sub --write-auto-sub --sub-lang \"$sub_lang\" --sub-format \"$sub_format\" --convert-subs \"$sub_format\""
