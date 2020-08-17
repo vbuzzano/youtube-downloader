@@ -28,20 +28,20 @@ _usage()
 
 _printerr() {
   if [ ! -z "$LOG_FILE" ]; then
-    echo "ERROR: $@"  >> $LOG_FILE
+    echo "ERROR: $@"  >> "$LOG_FILE"
   fi
   echo "$@" 1>&2
 }
 
 _print() {
   if [ ! -z "$sub_lang" ]; then
-    echo "$@" >> $LOG_FILE
+    echo "$@" >> "$LOG_FILE"
   fi
   echo "$@"
 }
 
 _load_config() {
-  exec 3<$CONFIG_FILE 
+  exec 3<"$CONFIG_FILE"
   while read -u3 line; do
     eval "$line"
   done
@@ -75,14 +75,14 @@ EOF
   youtube_dl_cmd="$youtube_dl_cmd $url"
 
   # execute youtube-dl
-  rm -f $file_cache
-  eval $youtube_dl_cmd 2>&1 | tee -a $file_cache $LOG_FILE
+  rm -f "$file_cache"
+  eval $youtube_dl_cmd 2>&1 | tee -a "$file_cache" "$LOG_FILE"
 
   # remove error line and add youtube before viedo id
-  sed -i -E "s/([a-zA-Z0-9_-]{11})?(.*)?/youtube \1/" $file_cache && \
-  sed -i "/^youtube $/d" $file_cache && \
-  sed -i -E "s/(.*)/youtube \1/" $file_cache && \
-  cat $file_cache >> $DOWNLOAD_ARCHIVE && sed -i '/^$/d' $DOWNLOAD_ARCHIVE
+  sed -i -E "s/([a-zA-Z0-9_-]{11})?(.*)?/youtube \1/" "$file_cache" && \
+  sed -i "/^youtube $/d" "$file_cache" && \
+  sed -i -E "s/(.*)/youtube \1/" "$file_cache" && \
+  cat "$file_cache" >> "$DOWNLOAD_ARCHIVE" && sed -i '/^$/d' "$DOWNLOAD_ARCHIVE"
 }
 
 _download_videos() {
@@ -101,10 +101,10 @@ _download_videos() {
   local sub_lang=$6
   local sub_format=$7
 
-  rm -rf $TMP_DIR/$key
-  mkdir -p $TMP_DIR/$key/downloads
-  cd  $TMP_DIR/$key
-  cp $DOWNLOAD_ARCHIVE ./downloaded.txt
+  rm -rf "$TMP_DIR/$key"
+  mkdir -p "$TMP_DIR/$key/downloads"
+  cd "$TMP_DIR/$key"
+  cp "$DOWNLOAD_ARCHIVE" ./downloaded.txt
   cd downloads
 
   local youtube_dl_cmd=""
@@ -141,24 +141,24 @@ EOF
 EOF
 
   # execute youtube-dl
-  eval $youtube_dl_cmd 2>&1 | tee -a $LOG_FILE
+  eval $youtube_dl_cmd 2>&1 | tee -a "$LOG_FILE"
 
   local count=$(find . -mindepth 1 -maxdepth 1 -type d | wc -l)
   if [ $count -gt 0 ]; then
     rename 's/(.*) - (\d{4})(\d{2})(\d{2}) - (.*) --end\.(.*)/$1 - $2-$3-$4 - $5.$6/' **/**/**/*.* && \
     _print "Copy downloaded videos to $DEST_DIR" && \
-    cp -rfn * $DEST_DIR && \
+    cp -rfn * "$DEST_DIR" && \
     cd .. && \
     _print "Append downloaded archive to $DOWNLOAD_ARCHIVE and remove empty lines" && \
-    grep -Fxvf $DOWNLOAD_ARCHIVE ./downloaded.txt >> $DOWNLOAD_ARCHIVE && sed -i '/^$/d' $DOWNLOAD_ARCHIVE
+    grep -Fxvf "$DOWNLOAD_ARCHIVE" ./downloaded.txt >> "$DOWNLOAD_ARCHIVE" && sed -i '/^$/d' "$DOWNLOAD_ARCHIVE"
   fi
-  cd $CURRENT_DIR && \
-  rm -rf $TMP_DIR/$key
+  cd "$CURRENT_DIR" && \
+  rm -rf "$TMP_DIR/$key"
 }
 
 _execute() {
   # Loop batch file
-  awk '!/^(#|;|\])/'  $BATCH_FILE |
+  awk '!/^(#|;|\])/'  "$BATCH_FILE" |
   while IFS= read -r channel; do
 
     # continue on empty line
@@ -222,13 +222,17 @@ fi
 _load_config
 
 # create log
-touch $LOG_FILE
+touch "$LOG_FILE"
 
 # assure download archive exists
-touch $DOWNLOAD_ARCHIVE
+touch "$DOWNLOAD_ARCHIVE"
 
 # init cache dir
-mkdir -p $CACHE_DIR
+mkdir -p "$CACHE_DIR"
 
+# remove cookie file if exists
+if [ -f "$COOKIES_FILE" ]; then
+  rm -f "$COOKIES_FILE"
+fi
 
 _execute
