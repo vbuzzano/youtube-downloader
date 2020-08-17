@@ -76,8 +76,11 @@ EOF
 
   # execute youtube-dl
   rm -f $file_cache
-  eval $youtube_dl_cmd | tee -a $file_cache $LOG_FILE
+  eval $youtube_dl_cmd 2>&1 | tee -a $file_cache $LOG_FILE
 
+  # remove error line and add youtube before viedo id
+  sed -i -E "s/([a-zA-Z0-9_-]{11})?(.*)?/youtube \1/" $file_cache && \
+  sed -i "/^youtube $/d" $file_cache && \
   sed -i -E "s/(.*)/youtube \1/" $file_cache && \
   cat $file_cache >> $DOWNLOAD_ARCHIVE && sed -i '/^$/d' $DOWNLOAD_ARCHIVE
 }
@@ -158,6 +161,9 @@ _execute() {
   awk '!/^(#|;|\])/'  $BATCH_FILE |
   while IFS= read -r channel; do
 
+    # continue on empty line
+    if [ -z "$channel" ]; then continue; fi
+
     _print ""
     _print "Prepare to download videos for $channel ..."
 
@@ -171,7 +177,7 @@ _execute() {
     local c_subtitleformat=${channel_args[5]}
 
     # check that c_url is not empty
-    if [ "$c_url" == "" ]; then
+    if [ -z "$c_url" ]; then
       echo "ERROR: channel url is required for channel $channel"
       exit 1
     fi
