@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 DOWNLOAD_SPEED_LIMIT=20M
 DEST_DIR=/media/rdc-nas/video/Youtube
@@ -17,12 +17,28 @@ DEFAULT_MAXFILESIZE="2048m"
 TMP_DIR=/tmp/youtube-downloader
 CURRENT_DIR=`pwd`
 
+# create log
+touch $LOG_FILE
+
 # assure download archive exists
 touch $DOWNLOAD_ARCHIVE
 
 # init cache dir
 mkdir -p $CACHE_DIR
 
+_printerr() {
+  if [ ! -z "$LOG_FILE" ]; then 
+    echo "ERROR: $@"  >> $LOG_FILE
+  fi
+  echo "$@" 1>&2
+}
+
+_print() {
+  if [ ! -z "$sub_lang" ]; then 
+    echo "$@" >> $LOG_FILE
+  fi
+  echo "$@"
+}
 
 _append_past_videos_to_downloaded_archive() {
   # $1 = channel url
@@ -31,6 +47,7 @@ _append_past_videos_to_downloaded_archive() {
   local url=$1
   local date_after=$2
   local file_cache=$3
+
   youtube-dl --playlist-reverse \
     --ignore-errors \
     --simulate \
@@ -39,13 +56,10 @@ _append_past_videos_to_downloaded_archive() {
     --cookies "$COOKIES_FILE" \
     --youtube-skip-dash-manifest \
     --get-id \
-    $URL | tee $file_cache
+    $url | tee -a $file_cache
+
     sed -i -E "s/(.*)/youtube \1/" $file_cache
     cat $file_cache >> $DOWNLOAD_ARCHIVE && sed -i '/^$/d' $DOWNLOAD_ARCHIVE
-}
-
-_print() {
-  echo "$@" >$LOG_FILE 2>&1
 }
 
 _download_videos() {
@@ -88,7 +102,7 @@ _download_videos() {
     --write-description
 EOF
 
-  if [ ! -z "sdfsf" ]; then 
+  if [ ! -z "$sub_lang" ]; then 
     youtube_dl_cmd="$youtube_dl_cmd --write-sub --write-auto-sub --sub-lang \"$sub_lang\" --sub-format \"$sub_format\" --convert-subs \"$sub_format\""
   fi
 
@@ -99,7 +113,7 @@ EOF
 EOF
 
   # execute youtube-dl
-  eval $youtube_dl_cmd >$LOG_FILE 2>&1
+  eval $youtube_dl_cmd 2>&1 | tee -a $LOG_FILE
 
   local count=$(find . -mindepth 1 -maxdepth 1 -type d | wc -l)
   if [ $count -gt 0 ]; then
@@ -148,17 +162,17 @@ _execute() {
     local c_key=$(echo -n "$c_url" | md5sum | cut -d' ' -f1)
 
     # check if we need to add old videos to downloaded archive
-    local past_downloaded_filename="$CACHE_DIR/$KEY.txt"
+    local past_downloaded_filename="$CACHE_DIR/$c_key.txt"
     if [ ! -f "$past_downloaded_filename" ]; then
         _print
         _print "Add past videos id to download archive for $c_url to file $past_downloaded_filename ..."
-        _append_past_videos_to_downloaded_archive $c_url $c_dateafter $past_downloaded_filename
+        _append_past_videos_to_downloaded_archive "$c_url" "$c_dateafter" "$past_downloaded_filename"
     fi
 
     _print
     _print "Download new videos files for $c_url"
     
-    _download_videos $c_url
+    _download_videos "$c_url" "$c_key" "$c_dateafter" "$c_format" "$c_maxfilesize" "$c_subtitlelang" "$c_subtitleformat"
     
     _print
     _print "done."
