@@ -47,8 +47,8 @@ _print() {
 
 _download_videos() {
   # $1 = channel url
-  URL=$1
-  KEY=$(echo -n "$URL" | md5sum | cut -d' ' -f1)
+  local URL=$1
+  local KEY=$(echo -n "$URL" | md5sum | cut -d' ' -f1)
   rm -rf $TMP_DIR/$KEY && \
   mkdir -p $TMP_DIR/$KEY/downloads && \
   cd  $TMP_DIR/$KEY && \
@@ -70,7 +70,7 @@ _download_videos() {
     --limit-rate $DOWNLOAD_SPEED_LIMIT \
     -o "%(uploader)s/%(uploader)s - S$(date +"%Y")/%(playlist_index)s. %(title)s %(upload_date)s/%(uploader)s - S$(date +"%Y")E%(playlist_index)s - %(upload_date)s - %(title)s --end.%(ext)s" \
     $URL >$LOG_FILE 2>&1
-  COUNT=$(find . -mindepth 1 -maxdepth 1 -type d | wc -l)
+  local COUNT=$(find . -mindepth 1 -maxdepth 1 -type d | wc -l)
   if [ $COUNT -gt 0 ]; then
     rename 's/(.*) - (\d{4})(\d{2})(\d{2}) - (.*) --end\.(.*)/$1 - $2-$3-$4 - $5.$6/' **/**/**/*.* && \
     _print "Copy downloaded videos to $DEST_DIR" && \
@@ -92,8 +92,8 @@ while IFS= read -r URL; do
   _print "Prepare to download videos for $URL ..."
 
   # check if we need to add old videos to downloaded archive
-  KEY=$(echo -n "$URL" | md5sum | cut -d' ' -f1)
-  filename="$CACHE_DIR/$KEY.txt"
+  local KEY=$(echo -n "$URL" | md5sum | cut -d' ' -f1)
+  local filename="$CACHE_DIR/$KEY.txt"
   if [ ! -f "$filename" ]; then
       _print
       _print "Add past videos id to download archive for $URL to file $filename ..."
