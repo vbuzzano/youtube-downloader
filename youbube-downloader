@@ -16,6 +16,8 @@ DEFAULT_MAXFILESIZE="2048m"
 DEFAULT_SLEEP_INTERVAL=30
 DEFAULT_MAXSLEEP_INTERVAL=60
 
+PROXY=""
+
 TMP_DIR="/tmp/youtube-downloader"
 CURRENT_DIR=`pwd`
 
@@ -72,6 +74,11 @@ EOF
   if [ ! -z "$COOKIES_FILE" ]; then
     youtube_dl_cmd="$youtube_dl_cmd --cookies \"$COOKIES_FILE\""
   fi
+
+  if [ ! -z "$PROXY" ]; then
+    youtube_dl_cmd="$youtube_dl_cmd --proxy \"$PROXY\""
+  fi
+
   youtube_dl_cmd="$youtube_dl_cmd $url"
 
   # execute youtube-dl
@@ -124,6 +131,10 @@ _download_videos() {
     --write-thumbnail
     --write-description
 EOF
+
+  if [ ! -z "$PROXY" ]; then
+    youtube_dl_cmd="$youtube_dl_cmd --proxy \"$PROXY\""
+  fi
 
   if [ ! -z "$COOKIES_FILE" ]; then
     youtube_dl_cmd="$youtube_dl_cmd --cookies \"$COOKIES_FILE\""
