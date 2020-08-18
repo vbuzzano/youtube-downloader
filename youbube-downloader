@@ -208,7 +208,7 @@ _execute() {
     _print
     _print "done."
 
-    timeout /t $DEFAULT_SLEEP_INTERVAL
+    sleep $DEFAULT_SLEEP_INTERVAL
   done
 }
 
