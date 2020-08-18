@@ -11,7 +11,7 @@ CACHE_DIR="$DEST_DIR/cache"
 DEFAULT_DATEAFTER=$(date +"%Y0101")
 DEFAULT_SUBTITLELANG=""
 DEFAULT_SUBTITLEFORMAT="srt"
-DEFAULT_FORMAT="bestvideo[ext=?mp4][height<=?720]+bestaudio[ext=?mp3]/best"
+DEFAULT_FORMAT="bestvideo[height<=?480]+worstaudio/worst"
 DEFAULT_MAXFILESIZE="2048m"
 DEFAULT_SLEEP_INTERVAL=30
 DEFAULT_MAXSLEEP_INTERVAL=60
@@ -211,6 +211,8 @@ _execute() {
     _print "Wait $DEFAULT_SLEEP_INTERVAL seconds to continue"
     sleep $DEFAULT_SLEEP_INTERVAL
   done
+
+  exit
 }
 
 # check config file
