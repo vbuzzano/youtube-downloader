@@ -135,6 +135,7 @@ _download_videos() {
     --add-metadata
     --write-thumbnail
     --write-description
+    --match-filter "!is_live"
 EOF
 
   if [ ! -z "$proxy" ]; then
