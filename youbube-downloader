@@ -238,4 +238,8 @@ if [ -f "$COOKIES_FILE" ]; then
   rm -f "$COOKIES_FILE"
 fi
 
+# reset log file
+echo "" > $LOG_FILE
+
+
 _execute
