@@ -208,6 +208,8 @@ _execute() {
     _print
     _print "done."
 
+    _print
+    _print "Wait $DEFAULT_SLEEP_INTERVAL seconds to continue"
     sleep $DEFAULT_SLEEP_INTERVAL
   done
 }
