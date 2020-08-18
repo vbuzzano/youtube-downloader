@@ -79,7 +79,7 @@ EOF
   eval $youtube_dl_cmd 2>&1 | tee -a "$file_cache" "$LOG_FILE"
 
   # remove error line and add youtube before viedo id
-  sed -i -E "s/([a-zA-Z0-9_-]{11})?(.*)?/youtube \1/" "$file_cache" && \
+  sed -i -E "s/^(ERROR: )?([a-zA-Z0-9_-]{11})?(.*)?$/youtube \2/" "$file_cache" && \
   sed -i "/^youtube $/d" "$file_cache" && \
   cat "$file_cache" >> "$DOWNLOAD_ARCHIVE" && sed -i '/^$/d' "$DOWNLOAD_ARCHIVE"
 }
